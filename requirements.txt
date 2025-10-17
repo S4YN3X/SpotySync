@@ -1,0 +1,7 @@
+rq
+python-dotenv
+Flask==3.0.3
+spotipy==2.23.0
+celery==5.4.0
+redis==5.0.7
+requests==2.31.0

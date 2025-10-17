@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Выбор треков</title>
+    <style>
+        body { background: #23272a; color: #fff; font-family: sans-serif; margin: 0; padding: 24px; }
+        .track-group { margin-bottom: 32px; }
+        .candidates { display: flex; flex-wrap: wrap; gap: 12px; }
+        .card {
+            background: #2c2f33; padding: 12px; border-radius: 8px;
+            width: 220px; text-align: center; cursor: pointer;
+            transition: all .2s;
+        }
+        .card:hover {
+            background: #1db95444;
+        }
+        .selected { border: 2px solid #1db954; }
+        .btn { background: #1db954; border: none; padding: 10px 22px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .card img {
+            width: 50%;        /* изображение растягивается по ширине блока */
+            height: auto;       /* сохраняет пропорции */
+            border-radius: 4px;
+            margin-bottom: 5px;
+            object-fit: cover;  /* если нужно заполнить блок полностью */
+        }
+    </style>
+</head>
+<body>
+    <h2>Выберите подходящие треки</h2>
+    <form id="selectionForm">
+        {% for original, tracks in results.items() %}
+            <div class="track-group">
+                <h3>{{ original }}</h3>
+                <div class="candidates">
+                    {% for t in tracks %}
+                        <div class="card" onclick="selectTrack(this)" data-id="{{ t.id }}">
+                            <img src="{{ t.image }}"><br>
+                            <strong>{{ t.artist }}</strong><br>
+                            {{ t.name }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+        <button class="btn" type="submit">Добавить выбранные</button>
+    </form>
+
+    <script>
+        const selected = new Set();
+        function selectTrack(el) {
+            const id = el.dataset.id;
+            if (selected.has(id)) {
+                selected.delete(id);
+                el.classList.remove('selected');
+            } else {
+                selected.add(id);
+                el.classList.add('selected');
+            }
+        }
+
+        document.getElementById('selectionForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const resp = await fetch('/add-tracks-final', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ track_ids: Array.from(selected) })
+            });
+            const data = await resp.json();
+            alert(`Добавлено ${data.added} треков!`);
+        };
+    </script>
+</body>
+</html>

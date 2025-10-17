@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>SpotySync — Импорт треков</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: #232629;
+      color: #eee;
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    .navbar {
+      width: 100vw;
+      background: #181a1b88;
+      padding: 10px 24px;
+      color: #cfcfcf;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    .navbar .brand {
+      font-weight: bold;
+      font-size: 20px;
+      color: #1db954;
+      letter-spacing: 1px;
+    }
+    .navbar a {
+      color: #b9bbbe;
+      text-decoration: none;
+      margin-left: 20px;
+      transition: color .14s;
+    }
+    .navbar a:hover { color: #1db954; }
+
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 40px auto;
+      background: #2c2f33;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.3);
+    }
+
+    h2 {
+      color: #1db954;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    textarea, select, input[type=text] {
+      width: 100%;
+      background: #1e2124;
+      color: #eee;
+      border: 1px solid #3a3d42;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 15px;
+      margin-top: 4px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: transparent;
+      border: 2px solid #1db954;
+      color: #1db954;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #1db954;
+      color: #232629;
+    }
+
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .card {
+      background: #1e2124;
+      border-radius: 10px;
+      padding: 10px;
+      width: 200px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.1s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    }
+    .cover {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .muted {
+      color: #9a9a9a;
+      font-size: 13px;
+    }
+    .query-block {
+      margin-bottom: 32px;
+    }
+    .query-block > b {
+      font-size: 18px;
+      color: #1db954;
+    }
+    #search_status, #add_status {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #b0b3b8;
+    }
+
+    input[type=radio] {
+      accent-color: #1db954;
+      margin-bottom: 6px;
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid #3a3d42;
+      margin: 24px 0;
+    }
+
+    #tracks_text {
+      resize: vertical;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <a href="/"><span class="brand">SpotySync</span></a>
+    <div>
+      <span>Привет, {{ username }}</span>
+      <a href="{{ url_for('logout') }}">Выйти</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Импорт треков</h2>
+
+    <label>Вставьте треки (по одной строке):</label>
+    <textarea id="tracks_text" rows="8" placeholder="LAZZY2WICE - Brdm"></textarea>
+
+    <br><br>
+    <label><input type="checkbox" id="create_new"> Создать новый плейлист</label>
+    <input type="text" id="new_playlist_name" placeholder="Название нового плейлиста">
+
+    <br><br>
+    <button id="btn_search">Найти похожие треки</button>
+
+    <div id="add_section" style="display:none;">
+      <button id="btn_add">Добавить выбранные треки</button>
+      <div id="add_status"></div>
+    </div>
+
+    <div id="search_status"></div>
+    <hr>
+    <div id="candidates_container"></div>
+  </div>
+
+<script>
+const btnSearch = document.getElementById('btn_search');
+const tracksText = document.getElementById('tracks_text');
+const status = document.getElementById('search_status');
+const container = document.getElementById('candidates_container');
+const addSection = document.getElementById('add_section');
+const btnAdd = document.getElementById('btn_add');
+const createNew = document.getElementById('create_new');
+const newPlaylistName = document.getElementById('new_playlist_name');
+
+let currentSearchJob = null;
+
+btnSearch.addEventListener('click', async () => {
+  const text = tracksText.value.trim();
+  if (!text) { alert('Введите треки'); return; }
+  status.innerText = 'Запуск задачи поиска...';
+  container.innerHTML = '';
+  addSection.style.display = 'none';
+
+  const res = await fetch('/api/search', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({tracks_text: text})
+  });
+  if (res.status !== 202) {
+    const j = await res.json(); alert('Ошибка: ' + JSON.stringify(j)); return;
+  }
+  const data = await res.json();
+  currentSearchJob = data.job_id;
+  pollSearchJob(currentSearchJob);
+});
+
+async function pollSearchJob(jobId) {
+  status.innerText = 'Ищем похожие треки...';
+  const interval = setInterval(async () => {
+    const res = await fetch('/api/job/' + jobId);
+    if (res.status !== 200) { clearInterval(interval); status.innerText = 'Ошибка опроса задачи'; return; }
+    const j = await res.json();
+    if (j.status === 'finished') {
+      clearInterval(interval);
+      if (j.result) populateCandidates(j.result);
+    }
+  }, 1000);
+}
+
+function populateCandidates(results) {
+  container.innerHTML = '';
+  let idx = 0;
+  for (const [q, arr] of Object.entries(results)) {
+    const block = document.createElement('div');
+    block.className = 'query-block';
+    const title = document.createElement('b');
+    title.innerText = `${++idx}. ${q}`;
+    block.appendChild(title);
+    block.appendChild(document.createElement('br'));
+
+    if (!arr || arr.length === 0) {
+      const m = document.createElement('div');
+      m.className = 'muted';
+      m.innerText = 'Не найдено похожих треков.';
+      block.appendChild(m);
+    } else {
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      arr.forEach((t, i) => {
+        const label = document.createElement('label');
+        label.className = 'card';
+
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 'selected_' + (idx-1);
+        input.value = t.id;
+        if (i === 0) input.checked = true;
+
+        const img = document.createElement('img');
+        img.src = t.album?.images?.[0]?.url || 'https://via.placeholder.com/200x200?text=No+Cover';
+        img.className = 'cover';
+
+        const nm = document.createElement('div');
+        nm.innerHTML = `<b>${t.name}</b>`;
+        const art = document.createElement('div');
+        art.className = 'muted';
+        art.innerText = t.artists.join(', ');
+        const dur = document.createElement('div');
+        dur.className = 'muted';
+        const sec = Math.floor((t.duration_ms || 0) / 1000);
+        dur.innerText = `Длительность: ${Math.floor(sec/60)}:${('0'+(sec%60)).slice(-2)}`;
+
+        label.appendChild(input);
+        label.appendChild(img);
+        label.appendChild(nm);
+        label.appendChild(art);
+        label.appendChild(dur);
+        grid.appendChild(label);
+      });
+      block.appendChild(grid);
+    }
+    container.appendChild(block);
+  }
+  addSection.style.display = 'block';
+  status.innerText = 'Выберите варианты и нажмите "Добавить".';
+}
+
+btnAdd.addEventListener('click', async () => {
+  const radios = container.querySelectorAll('input[type=radio]:checked');
+  const ids = Array.from(radios).map(r => r.value).filter(Boolean);
+  if (!ids.length) { alert('Выберите хотя бы один трек'); return; }
+
+  const payload = {
+    track_ids: ids,
+    create_new: createNew.checked,
+    new_playlist_name: newPlaylistName.value,
+  };
+  const res = await fetch('/api/add', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  if (res.status !== 202) {
+    const j = await res.json(); alert('Ошибка: ' + JSON.stringify(j)); return;
+  }
+  const { job_id } = await res.json();
+  pollAddJob(job_id);
+  btnAdd.disabled = true;
+});
+
+async function pollAddJob(jobId) {
+  const statusDiv = document.getElementById('add_status');
+  statusDiv.innerText = 'Добавляем треки...';
+  const interval = setInterval(async () => {
+    const res = await fetch('/api/job/' + jobId);
+    const j = await res.json();
+    if (j.status === 'finished') {
+      clearInterval(interval);
+      statusDiv.innerText = 'Готово! Треки добавлены в плейлист.';
+    }
+  }, 1500);
+}
+</script>
+</body>
+</html>
