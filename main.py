@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-SpotySync — Перенос плейлистов Яндекс.Музыки в Spotify
-FastAPI веб-приложение с real-time прогрессом через SSE
-"""
 
 import os
 import re
@@ -36,7 +32,6 @@ except ImportError:
 # ─── Статистика и Очередь ───────────────────────────────────────────────────
 STATS_FILE = "data/stats.json"
 
-# Важно: больше нет глобальной переменной global_stats = load_stats() !
 
 def update_stats(found_tracks: int, playlists: int = 1):
     """Считывает свежий файл, прибавляет числа и сохраняет"""
@@ -72,13 +67,13 @@ def get_current_stats():
             pass
     return {"total_tracks_synced": 0, "total_playlists": 0}
 
-# Семафор оставляем как было
+
 MAX_CONCURRENT_JOBS = 1
 job_semaphore = asyncio.Semaphore(MAX_CONCURRENT_JOBS)
 active_jobs_count = 0
 
 
-# Ограничиваем количество одновременных задач (например, 3)
+
 MAX_CONCURRENT_JOBS = 1
 job_semaphore = asyncio.Semaphore(MAX_CONCURRENT_JOBS)
 active_jobs_count = 0
@@ -115,7 +110,7 @@ class Job:
     spotify_url: str = ""
     error: str = ""
     elapsed: float = 0.0
-    queue_position: int = 0  # <--- Добавили
+    queue_position: int = 0
     owner: str = ""
 
 
@@ -162,13 +157,10 @@ async def get_playlists(username: str):
         yandex_playlists = data.get('playlists', [])
         result_playlists = []
         
-        # Если настроен токен, получаем реальное количество лайков
         if YANDEX_TOKEN:
             likes_count = "Все"
             try:
-                # Подключаемся по токену, чтобы узнать количество
                 ym = YMClient(token=YANDEX_TOKEN).init()
-                # Берем только метаданные треков (без загрузки всего списка)
                 likes_tracks = ym.users_likes_tracks()
                 if likes_tracks:
                     likes_count = len(likes_tracks)
@@ -200,7 +192,6 @@ async def get_playlists(username: str):
         return {"playlists": result_playlists}
         
     except requests.exceptions.RequestException as e:
-        # Если Яндекс недоступен (502, 503)
         logger.warning(f"Ошибка сети при обращении к Яндексу для {username}: {e}")
         return JSONResponse({"error": "Ошибка связи с Яндекс Музыкой"}, status_code=502)
     except Exception as e:
@@ -217,18 +208,14 @@ async def run_import(job_id: str, owner: str, kind: str):
     job = jobs[job_id]
     job.owner = owner
     
-    # Увеличиваем счетчик всех пришедших задач
     active_jobs_count += 1
     
-    # Если задач больше, чем может обработать семафор (в нашем случае 1), значит мы в очереди
     if active_jobs_count > MAX_CONCURRENT_JOBS:
         job.status = "queued"
         queue_pos = active_jobs_count - MAX_CONCURRENT_JOBS
-        # Отправляем сообщение на фронт
         emit_event(job_id, {"status": "queued", "message": f"Ожидание в очереди... Перед вами: {queue_pos}"})
     
     try:
-        # Семафор "заморозит" код здесь, если уже идет перенос у другого человека
         async with job_semaphore:
             job.status = "fetching"
             start = time.time()
@@ -236,13 +223,11 @@ async def run_import(job_id: str, owner: str, kind: str):
             
             tracks = []
             
-            # 1. Загрузка треков напрямую через API Яндекса
             if kind == "likes":
                 job.playlist_title = "Мне нравится (SpotySync)"
                 url = f"https://music.yandex.ru/handlers/playlist.jsx?owner={owner}&kinds=3"
                 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
                 
-                # Запускаем requests в отдельном потоке, чтобы не блокировать asyncio цикл
                 r = await asyncio.to_thread(requests.get, url, headers=headers)
                 r.raise_for_status()
                 
@@ -288,7 +273,6 @@ async def run_import(job_id: str, owner: str, kind: str):
             if not tracks:
                 raise ValueError("Плейлист пуст или скрыт настройками приватности!")
 
-            # 2. Подключаемся к Spotify
             job.status = "searching"
             emit_event(job_id, {"status": "searching", "message": "Поиск треков в Spotify..."})
 
@@ -359,7 +343,6 @@ async def run_import(job_id: str, owner: str, kind: str):
                             "message": f"Поиск: {job.progress}/{job.total} (найдено {job.found})"
                         })
 
-            # 4. Создаём плейлист в Spotify
             if not found_uris:
                 raise ValueError("Ни один трек не найден в Spotify!")
 
@@ -380,12 +363,10 @@ async def run_import(job_id: str, owner: str, kind: str):
                 batch = found_uris[i:i + BATCH_SIZE]
                 sp.playlist_add_items(playlist_id, batch)
 
-            # 5. Готово!
             job.spotify_url = f"https://open.spotify.com/playlist/{playlist_id}"
             job.elapsed = time.time() - start
             job.status = "done"
             
-            # Обновляем статистику
             update_stats(found_tracks=job.found, playlists=1)
             
             emit_event(job_id, {
@@ -406,7 +387,6 @@ async def run_import(job_id: str, owner: str, kind: str):
         emit_event(job_id, {"status": "error", "error": str(e)})
         logger.exception(f"Job {job_id} failed")
     finally:
-        # Задача завершилась (с ошибкой или успешно), освобождаем счетчик
         active_jobs_count -= 1
 
 
@@ -441,7 +421,6 @@ async def start_import(request: Request, background_tasks: BackgroundTasks):
 async def stream_events(job_id: str):
     if job_id not in jobs:
          return JSONResponse({"error": "Job not found"}, status_code=404)
-    # [Тот же самый код генератора SSE из вашего оригинала...]
     async def event_generator():
         queue = job_events.get(job_id)
         if not queue: return
