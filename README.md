@@ -1,5 +1,7 @@
 # SpotySync
-
+<p align="center">
+  <img src="assets/spotysync-preview.png" alt="SpotySync UI" width="900">
+</p>
 **SpotySync** — веб-сервис для мгновенного переноса плейлистов из Яндекс.Музыки в Spotify.  
 Просто введите логин Яндекса → выберите плейлист → получите готовый плейлист в Spotify.
 
