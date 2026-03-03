@@ -126,7 +126,7 @@ volumes:
 
 ## Roadmap
 
-- [ ] Rate limiting по IP (защита от DDoS)
+- [ ] Rate limiting по IP
 - [ ] Кэширование результатов поиска Spotify
 - [ ] SQLite для серверной истории переносов
 - [ ] Админ-панель со статистикой
