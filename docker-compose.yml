@@ -1,0 +1,48 @@
+services:
+  # ── FastAPI App ──
+  yasync:
+    build: .
+    container_name: yasync-app
+    restart: unless-stopped
+    expose:
+      - "8000"
+    env_file:
+      - .env
+    volumes:
+      - cache-data:/app/cache
+      - .data/stats.json:/data/stats.json
+    environment:
+      - SPOTIPY_CACHE_PATH=/app/cache/.cache
+    networks:
+      - web
+
+  # ── Nginx Reverse Proxy ──
+  nginx:
+    image: nginx:alpine
+    container_name: yasync-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certbot/conf:/etc/letsencrypt:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+    depends_on:
+      - yasync
+    networks:
+      - web
+
+  # ── Certbot (SSL) ──
+  certbot:
+    image: certbot/certbot
+    container_name: yasync-certbot
+    volumes:
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+
+volumes:
+  cache-data:
+
+networks:
+  web:

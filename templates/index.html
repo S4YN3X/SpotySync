@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpotySync — Яндекс.Музыка → Spotify</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔄</text></svg>">
+</head>
+<body>
+    <!-- Animated background -->
+    <div class="bg-animation">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="blob blob-4"></div>
+    </div>
+
+    <!-- ═══ Top Navigation ═══ -->
+    <nav class="navbar">
+        <div class="nav-inner">
+            <div class="nav-logo">
+                
+                <span class="nav-brand">SpotySync</span>
+            </div>
+            <div class="nav-links">
+				<button class="nav-btn" data-modal="modal-history">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+					</svg>
+					<span>История</span>
+				</button>
+                <button class="nav-btn" data-modal="modal-howto">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span>Инструкция</span>
+                </button>
+                <button class="nav-btn" data-modal="modal-about">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    <span>О проекте</span>
+                </button>
+                <button class="nav-btn" data-modal="modal-support">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                    </svg>
+                    <span>Поддержка</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══ Modals ═══ -->
+	<!-- Инстория -->
+	<div class="modal-overlay" id="modal-history">
+		<div class="modal" style="max-width: 700px;"> <!-- Сделали чуть шире для таблицы -->
+			<div class="modal-header">
+				<h2>История переносов</h2>
+				<button class="modal-close" data-close>&times;</button>
+			</div>
+			<div class="modal-body" style="padding: 16px;">
+				<div id="history-container">
+					<p style="text-align: center; color: var(--text-muted);">История пуста</p>
+				</div>
+				<button id="clear-history-btn" class="btn-secondary" style="margin-top: 16px; width: 100%; display: none;">Очистить историю</button>
+			</div>
+		</div>
+	</div>
+
+	
+    <!-- Инструкция -->
+    <div class="modal-overlay" id="modal-howto">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Инструкция</h2>
+                <button class="modal-close" data-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="instruction-steps">
+                    <div class="instr-step">
+                        <div class="instr-num">1</div>
+                        <div>
+                            <h4>Откройте Яндекс ID</h4>
+                            <p>Зайдите на <a href="https://id.yandex.ru/" target="_blank">id.yandex.ru</a> и найдите ваш логин. Введите его в строку поиска и нажмите «Найти плейлисты».
+							<code>Формат логина: Sniper322 или Sniper1337@yandex.ru</code></p>
+                        </div>
+                    </div>
+                    <div class="instr-step">
+                        <div class="instr-num">2</div>
+                        <div>
+                            <h4>Выберите музыку</h4>
+                            <p>Появится список всех ваших открытых плейлистов, включая любимые треки («Мне нравится»). Кликните на тот, который хотите перенести.<br>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="instr-step">
+                        <div class="instr-num">3</div>
+                        <div>
+                            <h4>Дождитесь переноса</h4>
+                            <p>SpotySync автоматически найдет треки в Spotify и создаст из них новый плейлист. Прогресс поиска будет виден на экране.</p>
+                        </div>
+                    </div>
+                    <div class="instr-step">
+                        <div class="instr-num">4</div>
+                        <div>
+                            <h4>Сохраните плейлист</h4>
+                            <p>После завершения вы получите ссылку на Spotify. Откройте её и нажмите <strong>«Сохранить»</strong>, чтобы добавить плейлист в свою библиотеку</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="instr-note">
+                    <strong>💡 Примечание:</strong> Плейлист должен быть публичным. Приватные плейлисты недоступны через API. Зайдите в Яндекс Музыку и сделайте их открытыми перед переносом.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- О проекте -->
+    <div class="modal-overlay" id="modal-about">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>О проекте</h2>
+                <button class="modal-close" data-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>SpotySync</strong> — бесплатный сервис для переноса плейлистов из Яндекс.Музыки в Spotify.</p>
+
+                <h4>Как это работает</h4>
+                <ul>
+                    <li>Загружаем треки из вашего плейлиста через API Яндекс.Музыки</li>
+                    <li>Ищем каждый трек в каталоге Spotify (по названию + исполнителю)</li>
+                    <li>Создаём публичный плейлист и выдаём вам ссылку</li>
+                    <li>Вы сохраняете его в свою библиотеку — готово!</li>
+                </ul>
+
+                <h4>Технологии</h4>
+                <div class="tech-tags">
+                    <span class="tech-tag">Python</span>
+                    <span class="tech-tag">FastAPI</span>
+                    <span class="tech-tag">Spotify Web API</span>
+                    <span class="tech-tag">Yandex Music API</span>
+                    <span class="tech-tag">SSE</span>
+                    <span class="tech-tag">Docker</span>
+                </div>
+
+                <h4>Ограничения</h4>
+                <ul>
+                    <li>~92% треков обычно находятся в Spotify (зависит от каталога)</li>
+                    <li>Поддерживаются только публичные плейлисты</li>
+                    <li>Spotify не всегда точно находит ремиксы и редкие издания</li>
+                </ul>
+
+                <p class="about-version">Версия 1.0 • 2026</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Поддержка -->
+    <div class="modal-overlay" id="modal-support">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Поддержка</h2>
+                <button class="modal-close" data-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Нашли баг или есть предложение? Свяжитесь с нами:</p>
+
+                <div class="support-links">
+                    <a href="" target="_blank" class="support-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                        </svg>
+                        <span>Telegram (в доработке)</span>
+                    </a>
+                    <a href="" class="support-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                        <span>Email (в доработке)</span>
+                    </a>
+                    <a href="" target="_blank" class="support-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        <span>GitHub (в доработке)</span>
+                    </a>
+					<a href="https://www.tbank.ru/cf/2UlaOcrMba7" target="_blank" class="support-link">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						  <circle cx="12" cy="12" r="10"></circle>
+						  <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path>
+						  <path d="M12 18V6"></path>
+						</svg>
+                        <span>Донат</span>
+                    </a>
+                </div>
+
+                <div class="support-faq">
+                    <h4>Частые вопросы</h4>
+                    <details>
+                        <summary>Плейлист не находится?</summary>
+                        <p>Убедитесь, что плейлист <strong>публичный</strong>. Откройте его в браузере — если он доступен без авторизации, значит он публичный.</p>
+                    </details>
+                    <details>
+                        <summary>Почему не все треки перенеслись?</summary>
+                        <p>Некоторые треки есть только в Яндекс.Музыке и отсутствуют в каталоге Spotify. Обычно переносится ~92% треков.</p>
+                    </details>
+                    <details>
+                        <summary>Могу ли я перенести приватный плейлист?</summary>
+                        <p>Пока нет. Мы работаем только с публичными плейлистами, доступными через API без авторизации.</p>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Main Container ═══ -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+
+                <h1>SpotySync</h1>
+            </div>
+            <p class="subtitle">Перенос плейлистов из Яндекс.Музыки в Spotify</p>
+			
+			<!-- Global Stats -->
+			<div class="global-stats-container">
+				<div class="global-stat-box">
+					<span class="stat-icon">🎧</span>
+					<div class="stat-info">
+						<span class="stat-value" id="global-tracks">--</span>
+						<span class="stat-label">треков перенесено</span>
+					</div>
+				</div>
+			</div>
+        </header>
+
+        <!-- Main card -->
+        <main class="card" id="main-card">
+            <!-- Step 1: Input -->
+			<!-- Step 1: Input -->
+			<div id="step-input" class="step active">
+				<div class="step-header">
+					<div class="step-badge">
+						<span class="badge-yandex" title="Яндекс Музыка">
+							<svg width="24" height="24" viewBox="0 0 447 445" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+								<path d="M442.973 173.499L441.756 164.528L368.261 147.37L406.225 91.0325L401.739 84.9248L342.538 113.892L349.076 35.1002L342.538 31.8563L305.79 95.1128L262.529 0H254.369L264.962 93.0853L156.773 6.94402L147.396 9.4023L230.673 113.892L65.3346 58.7961L57.5796 67.362L205.355 151.045L2.05279 168.202L0 180.443L211.488 203.303L34.7201 347.834L42.8806 358.859L252.316 244.536L211.083 445H223.729L304.574 256.396L353.562 403.767L362.128 397.228L343.754 249.452L418.466 333.946L422.977 325.38L367.45 220.865L446.242 248.641L447.053 240.05L381.338 187.387L442.973 173.499Z" fill="#FFFFFF"/>
+							</svg>
+						</span>
+						<svg class="arrow-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10h12m0 0l-4-4m4 4l-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+						<span class="badge-spotify">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+							</svg>
+						</span>
+					</div>
+					<h2>Укажите свой профиль</h2>
+					<p class="step-desc">Введите логин от Яндекс Музыки,<br>чтобы получить список открытых плейлистов</p>
+				</div>
+
+				<!-- Блок ввода логина -->
+				<div id="user-input-group">
+					<div class="input-group">
+						<div class="input-wrapper">
+							<svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+							
+							<input type="text" id="yandex-username" class="form-input" placeholder="Логин (например, ivan.ivanov)" autocomplete="off" spellcheck="false">
+						</div>
+						<div id="url-error" class="error-msg hidden"></div>
+					</div>
+
+					<button id="load-playlists-btn" class="btn-primary">
+						<span class="btn-text">Найти плейлисты</span>
+						<svg class="btn-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+							<path d="M4 10h12m0 0l-4-4m4 4l-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</button>
+
+					<div class="example-link">
+						<span>Пример:</span>
+						<code>ivan.ivanov или Pusev.Nikitosik@yandex.ru</code>
+					</div>
+				</div>
+
+				<!-- Блок выбора плейлистов (по умолчанию скрыт) -->
+				<div id="playlist-select-group" class="hidden">
+					<div class="step-desc" style="margin-bottom: 12px; text-align: left; color: var(--text-primary); font-weight: 500;">Выберите плейлист для переноса:</div>
+					<div class="playlists-list" id="playlists-container">
+						<!-- Сюда JS добавит кнопки плейлистов -->
+					</div>
+					
+					<button id="back-to-input-btn" class="btn-secondary" style="margin-top: 20px; width: 100%; justify-content: center;">
+						Изменить пользователя
+					</button>
+				</div>
+			</div>
+
+
+            <!-- Step 2: Progress -->
+            <div id="step-progress" class="step">
+                <div class="progress-header">
+                    <div class="spinner-container">
+                        <div class="spinner"></div>
+                        <div class="spinner-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+							</svg></div>
+                    </div>
+                    <h2 id="progress-title">Загрузка...</h2>
+                    <p id="progress-message" class="step-desc">Подключение к Яндекс.Музыке</p>
+                </div>
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <span id="progress-count">0 / 0</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                </div>
+                <div class="found-counter" id="found-counter">
+                    <div class="found-item found-yes">
+                        <span class="found-dot green"></span>
+                        <span>Найдено: <strong id="found-count">0</strong></span>
+                    </div>
+                    <div class="found-item found-no">
+                        <span class="found-dot red"></span>
+                        <span>Не найдено: <strong id="notfound-count">0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Result -->
+            <div id="step-result" class="step">
+                <div class="result-success" id="result-success">
+                    <div class="success-icon">
+                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                            <circle cx="32" cy="32" r="30" stroke="#1DB954" stroke-width="3"/>
+                            <path d="M20 32l8 8 16-16" stroke="#1DB954" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h2>Плейлист готов!</h2>
+                    <p id="result-summary" class="step-desc"></p>
+                    <a id="spotify-link" href="#" target="_blank" class="btn-spotify">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                        </svg>
+                        <span>Открыть в Spotify</span>
+                    </a>
+                    <p class="save-hint">Нажмите <strong>«Сохранить»</strong> в Spotify, чтобы добавить плейлист в свою библиотеку</p>
+                    <div id="not-found-section" class="not-found-section hidden">
+                        <button class="toggle-notfound" id="toggle-notfound">
+                            <span>Не найденные треки</span>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        </button>
+                        <ul id="not-found-list" class="not-found-list hidden"></ul>
+                    </div>
+                </div>
+                <div class="result-error hidden" id="result-error">
+                    <div class="error-icon">❌</div>
+                    <h2>Ошибка</h2>
+                    <p id="error-message" class="step-desc"></p>
+                </div>
+                <button id="restart-btn" class="btn-secondary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+                    </svg>
+                    <span>Перенести ещё</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>SpotySync использует публичный API Яндекс.Музыки и Spotify Web API</p>
+            <p class="footer-note">Плейлист создаётся публичным — просто сохраните его к себе по ссылке</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
