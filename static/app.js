@@ -80,11 +80,9 @@ loadPlaylistsBtn.addEventListener('click', async () => {
             return;
         }
 
-        // Прячем инпут, показываем список
         userInputGroup.classList.add('hidden');
         playlistSelectGroup.classList.remove('hidden');
         
-        // Рендерим кнопки плейлистов
         playlistsContainer.innerHTML = data.playlists.map(p => `
             <button class="playlist-item-btn" data-owner="${p.owner}" data-kind="${p.kind}">
                 <span class="pl-title">${p.title}</span>
@@ -92,7 +90,6 @@ loadPlaylistsBtn.addEventListener('click', async () => {
             </button>
         `).join('');
 
-        // Вешаем обработчики на созданные кнопки
         document.querySelectorAll('.playlist-item-btn').forEach(btn => {
             btn.addEventListener('click', () => startImport(btn.dataset.owner, btn.dataset.kind, btn));
         });
@@ -148,10 +145,8 @@ async function startImport(owner, kind, btnElement) {
             return;
         }
 
-        // ВАЖНО: Сохраняем ID задачи, чтобы не потерять при обновлении страницы!
         localStorage.setItem('active_job_id', data.job_id);
         
-        // Запускаем прослушивание
         listenSSE(data.job_id);
 
     } catch (err) {
@@ -164,9 +159,6 @@ async function startImport(owner, kind, btnElement) {
 /* -------------------------------------------------------------------------- */
 /* SSE Listener                                                               */
 /* -------------------------------------------------------------------------- */
-
-/* --- SSE Listener --- */
-/* --- SSE Listener --- */
 function listenSSE(jobId) {
     let source = new EventSource(`/api/stream/${jobId}`);
     let isFinished = false;
@@ -189,7 +181,6 @@ function listenSSE(jobId) {
 
         console.log("SSE отключился, переходим на ручной опрос сервера...");
         
-        // Начинаем опрашивать сервер раз в 1 секунду
         const intervalId = setInterval(async () => {
             if (isFinished) {
                 clearInterval(intervalId);
@@ -197,7 +188,7 @@ function listenSSE(jobId) {
             }
             try {
                 const res = await fetch(`/api/job/${jobId}`);
-                if (!res.ok) return; // Если 404, ждем дальше
+                if (!res.ok) return;
                 
                 const data = await res.json();
                 updateUIFromData(data);
@@ -213,7 +204,6 @@ function listenSSE(jobId) {
     };
 }
 
-// Выносим функцию СНАРУЖИ, чтобы скобки не конфликтовали
 function updateUIFromData(data) {
     if (data.message && document.getElementById('progress-message')) {
         document.getElementById('progress-message').textContent = data.message;
@@ -280,7 +270,6 @@ function showResult(data) {
     resultSummary.textContent = `${title} • ${found} из ${total} (${pct}%) • ${elapsed} сек`;
     spotifyLink.href = data.spotify_url;
 
-    // Not found tracks
     const nf = data.not_found || [];
     if (nf.length > 0) {
         notFoundSection.classList.remove('hidden');
@@ -320,7 +309,6 @@ function resetProgress() {
 }
 
 restartBtn.addEventListener('click', () => {
-    // Возвращаем UI в первоначальное состояние ввода
     userInputGroup.classList.remove('hidden');
     playlistSelectGroup.classList.add('hidden');
     playlistsContainer.innerHTML = '';
@@ -368,14 +356,12 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Загрузка статистики
 async function loadGlobalStats() {
     try {
         const res = await fetch('/api/stats');
         const data = await res.json();
         const countElement = document.getElementById('global-tracks');
         
-        // Красивая анимация набора числа
         let startObj = { val: 0 };
         let endVal = data.total_tracks_synced;
         
@@ -385,11 +371,9 @@ async function loadGlobalStats() {
         function updateCounter(currentTime) {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            // ease-out cubic
             const easeOut = 1 - Math.pow(1 - progress, 3);
             
             const currentVal = Math.floor(easeOut * endVal);
-            // Добавляем пробелы в тысячи (напр. 1 200 450)
             countElement.textContent = currentVal.toLocaleString('ru-RU');
             
             if (progress < 1) {
@@ -409,38 +393,29 @@ async function checkActiveJob() {
     if (!activeJobId) return; // Нет активных задач
 
     try {
-        // Спрашиваем у сервера статус потерянной задачи
         const res = await fetch(`/api/job/${activeJobId}`);
         if (!res.ok) {
-            // Если сервер уже забыл про эту задачу (например, после перезапуска сервера)
             localStorage.removeItem('active_job_id');
             return;
         }
 
         const data = await res.json();
 
-        // Если задача УЖЕ завершилась, пока нас не было
         if (data.status === "done") {
-            // Сохраняем в историю тихо или показываем экран результата
             localStorage.removeItem('active_job_id');
             showResult(data);
         } 
-        // Если задача завершилась ошибкой
         else if (data.status === "error") {
             localStorage.removeItem('active_job_id');
             showError(data.error);
         } 
-        // Если задача ВСЁ ЕЩЁ в процессе!
         else {
-            // Возвращаем пользователя на экран прогресса
             userInputGroup.classList.add('hidden');
             playlistSelectGroup.classList.add('hidden');
             showStep(stepProgress);
             
-            // Восстанавливаем интерфейс
             updateUIFromData(data);
             
-            // Заново подключаемся к потоку
             listenSSE(activeJobId);
         }
     } catch (e) {
@@ -448,7 +423,6 @@ async function checkActiveJob() {
     }
 }
 
-// Запускаем проверку при открытии сайта
 checkActiveJob();
 
 
@@ -456,10 +430,8 @@ checkActiveJob();
 const HISTORY_KEY = 'yasync_history';
 
 function saveToHistory(jobData) {
-    // Получаем текущую историю
     let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
     
-    // Формируем новую запись
     const record = {
         username: jobData.owner || 'Неизвестно',
         title: jobData.playlist_title,
@@ -472,7 +444,6 @@ function saveToHistory(jobData) {
         })
     };
 
-    // Добавляем в начало и оставляем только последние 50 записей, чтобы не засорять память
     history.unshift(record);
     if (history.length > 50) history.pop();
 
@@ -522,7 +493,6 @@ function renderHistory() {
     clearBtn.style.display = 'block';
 }
 
-// Обработчик очистки истории
 document.getElementById('clear-history-btn').addEventListener('click', () => {
     if (confirm('Вы уверены, что хотите очистить историю?')) {
         localStorage.removeItem(HISTORY_KEY);
@@ -530,11 +500,7 @@ document.getElementById('clear-history-btn').addEventListener('click', () => {
     }
 });
 
-// Рендерим историю при загрузке страницы
 renderHistory();
-
-
-// Вызываем при старте
 loadGlobalStats();
 
 // Init
