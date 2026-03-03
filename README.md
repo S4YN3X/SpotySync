@@ -84,7 +84,7 @@ docker-compose up --build -d
 ## Структура проекта
 
 ```
-spotysync/
+app/
 ├── main.py              # FastAPI backend
 ├── Dockerfile
 ├── docker-compose.yml
