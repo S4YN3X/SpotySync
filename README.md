@@ -44,11 +44,10 @@ cd spotysync
 ### 2. Создайте файл `.env`
 
 ```env
-SPOTIFY_CLIENT_ID=ваш_client_id
-SPOTIFY_CLIENT_SECRET=ваш_client_secret
+SPOTIFY_CLIENT_ID=client_id
+SPOTIFY_CLIENT_SECRET=client_secret
 SPOTIFY_REDIRECT_URI=http://localhost:8000/callback
-SPOTIFY_SCOPE=playlist-modify-public playlist-modify-private
-YANDEX_TOKEN=ваш_токен_яндекса
+YANDEX_TOKEN=токен_яндекса
 ```
 
 > `YANDEX_TOKEN` нужен для загрузки плейлиста «Мне нравится» и получения полных данных о треках.
